@@ -126,36 +126,31 @@ mapview::mapshot(map,
 
 
 ################################################################################
-# plot post covid raw # of SNAP individuals
+# create interactive version of SNAP map
 ################################################################################
 
-# prep for plotting
-d = c(min(c(community_districts$bc_snap_recipients.x, community_districts$bc_snap_recipients.y), na.rm=T), 
-      max(c(community_districts$bc_snap_recipients.x, community_districts$bc_snap_recipients.y), na.rm=T))
+# prep for mapping
+community_districts = community_districts %>%
+  mutate(label = paste0("<strong>Community District #</strong>: ", BoroCD, "<br>",
+                        "<strong>Population (2020):</strong> ", format(pop, big.mark = ","), "<br>", 
+                        "<strong>Number of SNAP recipients (Dec 2021):</strong> ", 
+                            format(bc_snap_recipients.x, big.mark = ","), "<br>",
+                        "<strong>% of Population receiving SNAP (Dec 2021):</strong> ", round(perc_snap_cur*100, 0), "%<br>",
+                        "<strong>% growth in recipients since 2019:</strong> ", 
+                        round(((bc_snap_recipients.x-bc_snap_recipients.y)/bc_snap_recipients.y)*100, 0), "%")) 
 
-pal = colorNumeric(
-  palette = colorRamp(rev(nycc_pal("cool")(12))),
-  domain = d,
-  na.color = "transparent"
-)
-map = leaflet() %>% 
-  addPolygons(data = community_districts, weight = 0, color = ~pal(bc_snap_recipients.x), 
-              fillOpacity = 1, smoothFactor = 0) %>% 
+map = leaflet(options = leafletOptions(zoomControl = FALSE)) %>% 
+  addPolygons(data = community_districts, weight = 0, color = ~pal(perc_snap_cur), 
+              fillOpacity = 1, smoothFactor = 0, popup = ~label) %>% 
   addCouncilStyle(add_dists = F) %>%
-  addLabelOnlyMarkers(data = labels, 
-                      label = ~cur_recipients_label, 
-                      labelOptions = labelOptions(noHide = T, direction = 'left', textOnly = T, 
-                                                  style=list('color'="#555555", 'fontSize'="20px"))) %>%
   addLegend_decreasing(position = "topleft", pal = pal, 
                        values = d,
                        title = paste0("# of people in community district  <br>", 
                                       "with SNAP benefits"), 
                        opacity = 1, decreasing = T)
 
-mapview::mapshot(map, 
-                 file = file.path("visuals", "num_individuals_SNAP_benefits_cur.png"),
-                 remove_controls = c("homeButton", "layersControl", "zoomControl"), 
-                 vwidth = 1000, vheight = 850)
+saveWidget(map, file=file.path('visuals', 
+                               "percent_individuals_SNAP_benefits.html"))
 
 
 ################################################################################
@@ -175,7 +170,4 @@ community_districts %>%
          `2020 Population` = pop, 
          `Dec 2022 SNAP recipients` = bc_snap_recipients.x, 
          `District SNAP recipients as % of population` = perc_snap_cur) %>%
-  gt() %>%
-  tab_header(title = "SNAP Recipients by Community District") %>%
-  gt_theme_nytimes() %>%
-  gtsave("visuals/info_table.pdf")
+  write.xlsx("visuals/info_table.xlsx")
