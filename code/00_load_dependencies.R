@@ -5,7 +5,7 @@
 #' 
 #' IF YOU DO NOT WANT TO INSTALL ANY OF THESE PACKAGES, DO NOT RUN THIS CODE.
 
-list.of.packages <- c("tidyverse", "janitor")
+list.of.packages <- c("gt", "gtExtras", "mapview", "councildown", "leaflet", "sf", "tidyverse", "janitor", "jsonlite")
 
 # checks if packages has been previously installed
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
@@ -35,3 +35,16 @@ unzip_sf <- function(zip_url) {
 
 # remove created variables for packages
 rm(list.of.packages,new.packages)
+
+
+geometry = st_sfc(st_point(c(-74.0037626, 40.7916781)), 
+                  st_point(c(-73.757623, 40.631025)), 
+                  st_point(c(-74.105017, 40.658491)), 
+                  st_point(c(-73.948387, 40.551264)), 
+                  st_point(c(-73.944587, 40.898989)))
+
+boro_label_locations = st_sf(boro = c("Manhattan", "Queens", "Staten Island", 
+                                      "Brooklyn", "Bronx"), 
+                             geometry = geometry) %>% 
+  st_set_crs(st_crs(4326))
+
