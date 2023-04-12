@@ -1,10 +1,11 @@
 source("code/00_load_dependencies.R")
+source("../tokens.R")
 
 ################################################################################
 # Created by: Anne Driscoll
-# Last edited on: 4/6/2023
+# Last edited on: 4/12/2023
 #
-# This file creates a map of SNAP usage from Human Resources Administration
+# This file creates a map of CFC locations by council district
 ################################################################################
 
 
@@ -12,52 +13,86 @@ source("code/00_load_dependencies.R")
 # read in data
 ################################################################################
 
-current_snap_population = fromJSON("https://data.cityofnewyork.us/resource/jye8-w4d7.json?$query=SELECT%20%60month%60%2C%20%60boro%60%2C%20%60cd%60%2C%20%60bc_snap_recipients%60%2C%20%60bc_snap_households%60%0AWHERE%20%60month%60%20%3D%20%222022-12-01T00%3A00%3A00%22%20%3A%3A%20floating_timestamp%0AORDER%20BY%20%60month%60%20DESC%20NULL%20LAST")
-current_snap_population = current_snap_population %>%
-  mutate(og_cd =cd, 
-         cd = gsub("M", "1", cd), 
-         cd = gsub("B", "2", cd),
-         cd = gsub("K", "3", cd),  
-         cd = gsub("Q", "4", cd), 
-         cd = gsub("S", "5", cd), 
-         bc_snap_recipients = as.numeric(bc_snap_recipients), 
-         bc_snap_households = as.numeric(bc_snap_households)) 
-
-pre_pandemic_snap_population = fromJSON("https://data.cityofnewyork.us/resource/jye8-w4d7.json?$query=SELECT%20%60month%60%2C%20%60boro%60%2C%20%60cd%60%2C%20%60bc_snap_recipients%60%2C%20%60bc_snap_households%60%0AWHERE%20%60month%60%20%3D%20%222019-12-01T00%3A00%3A00%22%20%3A%3A%20floating_timestamp%0AORDER%20BY%20%60month%60%20DESC%20NULL%20LAST")
-pre_pandemic_snap_population = pre_pandemic_snap_population %>%
-  mutate(og_cd = cd, 
-         cd = gsub("M", "1", cd), 
-         cd = gsub("B", "2", cd),
-         cd = gsub("K", "3", cd),  
-         cd = gsub("Q", "4", cd), 
-         cd = gsub("S", "5", cd), 
-         bc_snap_recipients = as.numeric(bc_snap_recipients), 
-         bc_snap_households = as.numeric(bc_snap_households)) 
-
-
-cd_population = readxl::read_xlsx(file.path("data", "input", 
-                                            "nyc_decennialcensusdata_2010_2020_change.xlsx"), 
-                                  sheet = "2010, 2020, and Change", skip = 3) %>%
-  filter(`CD Type` == "CD") %>%
-  select(GeoID, Pop_20) %>%
-  rename(cd = GeoID, pop = Pop_20)
-  
-community_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip/data-maps/open-data/nycd_21d.zip") %>%
+council_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip/data-maps/open-data/nycc_21d.zip") %>%
   st_read() %>%
-  st_transform(st_crs(4326)) %>% 
-  merge(current_snap_population, by.x = "BoroCD", by.y = "cd", all.x = T) %>%
-  merge(pre_pandemic_snap_population, by.x = "BoroCD", by.y = "cd", all.x = T) %>%
-  merge(cd_population, by.x = "BoroCD", by.y = "cd", all.x = T) %>%
-  mutate(perc_snap_cur = bc_snap_recipients.x/pop, 
-         perc_snap_pre = bc_snap_recipients.y/pop, 
-         borough_letter = substr(boro.x, 1, 1), 
-         borough_letter = ifelse(boro.x == "Brooklyn", "K", borough_letter)) %>%
-  drop_na(perc_snap_cur)
+  st_transform(st_crs(4326))
 
+cfc_locations = read_csv(file.path("data", "input", "EFAP_pdf_3_6_23.csv")) %>%
+  mutate(address = paste0(DISTADD, ", ", DISTBORO, ", New York, ", DISTZIP))
+
+################################################################################
+# munge the cfc locations
+################################################################################
+
+register_google(key = google_maps_token)
+lat_lon = geocode(cfc_locations$address)
+cfc_geocoded = cbind(cfc_locations, lat_lon)
+
+cfc_geocoded$lat[cfc_geocoded$ID == 80419] = 40.704906
+cfc_geocoded$lon[cfc_geocoded$ID == 80419] = -73.955944
+
+cfc_geocoded$lat[cfc_geocoded$ID == 85710] = 40.697440
+cfc_geocoded$lon[cfc_geocoded$ID == 85710] = -73.789114
+
+# some of them aren't actually in NYC - we're going to manually fix them 
+#   if there were more or I had more time I wouldn't but........
+out_of_bounds = which(cfc_geocoded$lat > 41| cfc_geocoded$lat < 39 | 
+                        cfc_geocoded$lon > -73 | cfc_geocoded$lon < -75)
+
+cfc_geocoded$lat[cfc_geocoded$ID == 81460] = 40.670860
+cfc_geocoded$lon[cfc_geocoded$ID == 81460] = -73.938263 
+
+cfc_geocoded$lat[cfc_geocoded$ID == 80373] = 40.692461
+cfc_geocoded$lon[cfc_geocoded$ID == 80373] = -73.994368
+
+cfc_geocoded$lat[cfc_geocoded$ID == 85720] = 40.633871
+cfc_geocoded$lon[cfc_geocoded$ID == 85720] = -73.964062
+
+cfc_geocoded$lat[cfc_geocoded$ID == 83608] = 40.650028
+cfc_geocoded$lon[cfc_geocoded$ID == 83608] = -73.954685
+
+cfc_geocoded$lat[cfc_geocoded$ID == 85702] = 40.807931
+cfc_geocoded$lon[cfc_geocoded$ID == 85702] = -73.880980
+
+cfc_geocoded$lat[cfc_geocoded$ID == 85709] = 40.835352
+cfc_geocoded$lon[cfc_geocoded$ID == 85709] = -73.862052
+
+cfc_geocoded$lat[cfc_geocoded$ID == 85243] = 40.691430
+cfc_geocoded$lon[cfc_geocoded$ID == 85243] = -73.862205
+
+cfc_geocoded$lat[cfc_geocoded$ID == 85332] = 40.682798
+cfc_geocoded$lon[cfc_geocoded$ID == 85332] = -73.769656
+
+cfc_geocoded$lat[cfc_geocoded$ID == 83623] = 40.761195
+cfc_geocoded$lon[cfc_geocoded$ID == 83623] = -73.869022
+
+cfc_geocoded$lat[cfc_geocoded$ID == 85167] = 40.704565
+cfc_geocoded$lon[cfc_geocoded$ID == 85167] = -73.811768
+
+cfc_geocoded$lat[cfc_geocoded$ID == 83296] = 40.707902
+cfc_geocoded$lon[cfc_geocoded$ID == 83296] = -73.798884
+
+cfc_geocoded$lat[cfc_geocoded$ID == 85255] = 40.670848
+cfc_geocoded$lon[cfc_geocoded$ID == 85255] = -73.769249
+
+cfc_geocoded$lat[cfc_geocoded$ID == 80971] = 40.756786
+cfc_geocoded$lon[cfc_geocoded$ID == 80971] = -73.914506
+
+cfc_geocoded$lat[cfc_geocoded$ID == 85380] = 40.636377
+cfc_geocoded$lon[cfc_geocoded$ID == 85380] = -74.165004
+
+cfc_geocoded$lat[cfc_geocoded$ID == 85356] = 40.622334
+cfc_geocoded$lon[cfc_geocoded$ID == 85356] = -74.080422
+
+cfc_geocoded =  st_as_sf(cfc_geocoded, coords = c("lon","lat"),
+                         crs = st_crs(4326))
 
 ################################################################################
 # prep for plotting 
 ################################################################################
+
+# how many cfc in each district?
+districts = aggregate(cfc_geocoded, by=council_districts, FUN=sum)
 
 # prep for plotting
 d = c(min(community_districts$perc_snap_cur, na.rm=T), 
@@ -82,7 +117,8 @@ labels = community_districts %>%
 labels = boro_label_locations %>%
   merge(labels, by.x = "boro", by.y = "boro.x", all = T)
 
-source_notes_locations$source = "Source: NYC Open Data, Department of City Planning"
+source_notes_locations$source = "SNAP enrollees: data.cityofnewyork.us/d/jye8-w4d7; Population: nyc.gov/site/planning/planning-level/nyc-population/2020-census.page"
+
 
 
 ################################################################################
@@ -125,7 +161,7 @@ community_districts = community_districts %>%
   mutate(label = paste0("<strong>Community District #</strong>: ", BoroCD, "<br>",
                         "<strong>Population (2020):</strong> ", format(pop, big.mark = ","), "<br>", 
                         "<strong>Number of SNAP recipients (Dec 2021):</strong> ", 
-                            format(bc_snap_recipients.x, big.mark = ","), "<br>",
+                        format(bc_snap_recipients.x, big.mark = ","), "<br>",
                         "<strong>% of Population receiving SNAP (Dec 2021):</strong> ", round(perc_snap_cur*100, 0), "%<br>",
                         "<strong>% growth in recipients since 2019:</strong> ", 
                         round(((bc_snap_recipients.x-bc_snap_recipients.y)/bc_snap_recipients.y)*100, 0), "%")) 
@@ -142,23 +178,3 @@ map = leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
 
 saveWidget(map, file=file.path('visuals', 
                                "percent_individuals_SNAP_benefits.html"))
-
-
-################################################################################
-# get table output
-################################################################################
-
-community_districts %>%
-  st_drop_geometry() %>%
-  drop_na(pop) %>%
-  mutate(perc_snap_cur = paste0(round(perc_snap_cur*100, 0), "%"), 
-         bc_snap_recipients.x = format(bc_snap_recipients.x, big.mark=","), 
-         pop = format(pop, big.mark=","), 
-         BoroCD = paste0(borough_letter, substr(BoroCD, 2, 3))) %>%
-  select(BoroCD, pop, bc_snap_recipients.x, perc_snap_cur) %>%
-  arrange(BoroCD) %>% 
-  rename(`Community District` = BoroCD, 
-         `2020 Population` = pop, 
-         `Dec 2022 SNAP recipients` = bc_snap_recipients.x, 
-         `District SNAP recipients as % of population` = perc_snap_cur) %>%
-  write.xlsx("visuals/info_table.xlsx")

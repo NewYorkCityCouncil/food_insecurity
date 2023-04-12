@@ -7,7 +7,7 @@
 
 list.of.packages <- c("gt", "gtExtras", "mapview", "councildown", "leaflet", 
                       "sf", "tidyverse", "janitor", "jsonlite", "openxlsx", 
-                      "htmlwidgets")
+                      "htmlwidgets", "ggmap")
 
 # checks if packages has been previously installed
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
@@ -39,14 +39,19 @@ unzip_sf <- function(zip_url) {
 rm(list.of.packages,new.packages)
 
 
-geometry = st_sfc(st_point(c(-74.0037626, 40.7916781)), 
-                  st_point(c(-73.757623, 40.631025)), 
-                  st_point(c(-74.105017, 40.658491)), 
-                  st_point(c(-73.948387, 40.551264)), 
-                  st_point(c(-73.944587, 40.898989)))
+geo = st_sfc(st_point(c(-73.9927626, 40.7916781)), 
+             st_point(c(-73.757623, 40.631025)), 
+             st_point(c(-74.105017, 40.658491)), 
+             st_point(c(-73.948387, 40.555264)), 
+             st_point(c(-73.930587, 40.898989)))
 
 boro_label_locations = st_sf(boro = c("Manhattan", "Queens", "Staten Island", 
                                       "Brooklyn", "Bronx"), 
-                             geometry = geometry) %>% 
+                             geometry = geo) %>% 
   st_set_crs(st_crs(4326))
+
+
+geo = st_sfc(st_point(c(-73.645, 40.5)))
+source_notes_locations = st_sf(source = "", 
+                               geometry = geo)
 
