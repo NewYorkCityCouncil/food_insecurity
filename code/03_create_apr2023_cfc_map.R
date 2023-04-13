@@ -51,7 +51,7 @@ pal = colorBin(
   palette = rev(nycc_pal("cool")(100)),
   bins = c(0, 2, 4, 6, 10, 30),
   domain = d,
-  na.color = "red"
+  na.color = "transparent"
 )
 
 ################################################################################
@@ -61,7 +61,9 @@ pal = colorBin(
 # plot
 map = leaflet() %>% 
   addPolygons(data = community_districts, weight = 0, color = ~pal(cfc_per100k), 
-              fillOpacity = 1, smoothFactor = 0, popup = ~paste0(cfc_per100k, " CFC locations")) %>% 
+              fillOpacity = 1, smoothFactor = 0, 
+              popup = ~paste0(round(cfc_per100k, 1), 
+                              " CFC locations per 100k")) %>% 
   addLegend_decreasing(position = "topleft", pal = pal, 
                        values = d,
                        title = paste0("# of CFC locations per 100k <br>", 

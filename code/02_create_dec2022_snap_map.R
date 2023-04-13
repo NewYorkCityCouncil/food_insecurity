@@ -129,7 +129,7 @@ community_districts = community_districts %>%
                         "<strong>% growth in recipients since 2019:</strong> ", 
                         round(((bc_snap_recipients.x-bc_snap_recipients.y)/bc_snap_recipients.y)*100, 0), "%")) 
 
-map = leaflet(options = leafletOptions(zoomControl = FALSE)) %>% 
+map = leaflet() %>% 
   addPolygons(data = community_districts, weight = 0, color = ~pal(perc_snap_cur), 
               fillOpacity = 1, smoothFactor = 0, popup = ~label) %>% 
   addCouncilStyle(add_dists = F) %>%
