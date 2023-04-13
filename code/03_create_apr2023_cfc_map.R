@@ -145,22 +145,3 @@ mapview::mapshot(map,
                  file = file.path("visuals", "number_CFC_locations.pdf"),
                  remove_controls = c("homeButton", "layersControl", "zoomControl"), 
                  vwidth = 1000, vheight = 850)
-
-
-################################################################################
-# create interactive version of CFC map
-################################################################################
-
-# prep for mapping
-cfc_locations = cfc_locations %>%
-  mutate(label = paste0("<strong>Program Name:</strong> ", PROGRAM, "<br>",
-                        "<strong>Open Times:</strong> ", DAYS, "<br>",
-                        "<strong>Address:</strong> ", address)) 
-
-map = leaflet(options = leafletOptions(zoomControl = FALSE)) %>% 
-  addCircles(data = cfc_locations, radius = 100, 
-              fillOpacity = 0.8, stroke = F, popup = ~label) %>% 
-  addCouncilStyle(add_dists = T) 
-
-saveWidget(map, file=file.path('visuals', 
-                               "individual CFC locations.html"))
