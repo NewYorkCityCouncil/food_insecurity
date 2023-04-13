@@ -2,7 +2,7 @@ source("code/00_load_dependencies.R")
 
 ################################################################################
 # Created by: Anne Driscoll
-# Last edited on: 4/6/2023
+# Last edited on: 4/13/2023
 #
 # This file creates a map of SNAP usage from Human Resources Administration
 ################################################################################
@@ -69,7 +69,6 @@ pal = colorBin(
   domain = d,
   na.color = "transparent"
 )
-
 
 labels = community_districts %>%
   st_drop_geometry() %>%
@@ -138,6 +137,8 @@ map = leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
                        values = d,
                        title = paste0("% SNAP recipients in <br>", 
                                       "Community District"), 
+                       labFormat = labelFormat(suffix = "%", 
+                                               transform = function(x){x*100}),
                        opacity = 1, decreasing = T)
 
 saveWidget(map, file=file.path('visuals', 

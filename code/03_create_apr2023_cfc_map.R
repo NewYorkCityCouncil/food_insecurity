@@ -17,75 +17,7 @@ council_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip/d
   st_read() %>%
   st_transform(st_crs(4326))
 
-cfc_locations = read_csv(file.path("data", "input", "EFAP_pdf_3_6_23.csv")) %>%
-  mutate(address = paste0(DISTADD, ", ", DISTBORO, ", New York, ", DISTZIP))
-
-################################################################################
-# munge the cfc locations
-################################################################################
-
-register_google(key = google_maps_token)
-lat_lon = geocode(cfc_locations$address)
-cfc_geocoded = cbind(cfc_locations, lat_lon)
-
-cfc_geocoded$lat[cfc_geocoded$ID == 80419] = 40.704906
-cfc_geocoded$lon[cfc_geocoded$ID == 80419] = -73.955944
-
-cfc_geocoded$lat[cfc_geocoded$ID == 85710] = 40.697440
-cfc_geocoded$lon[cfc_geocoded$ID == 85710] = -73.789114
-
-# some of them aren't actually in NYC - we're going to manually fix them 
-#   if there were more or I had more time I wouldn't but........
-out_of_bounds = which(cfc_geocoded$lat > 41| cfc_geocoded$lat < 39 | 
-                        cfc_geocoded$lon > -73 | cfc_geocoded$lon < -75)
-
-cfc_geocoded$lat[cfc_geocoded$ID == 81460] = 40.670860
-cfc_geocoded$lon[cfc_geocoded$ID == 81460] = -73.938263 
-
-cfc_geocoded$lat[cfc_geocoded$ID == 80373] = 40.692461
-cfc_geocoded$lon[cfc_geocoded$ID == 80373] = -73.994368
-
-cfc_geocoded$lat[cfc_geocoded$ID == 85720] = 40.633871
-cfc_geocoded$lon[cfc_geocoded$ID == 85720] = -73.964062
-
-cfc_geocoded$lat[cfc_geocoded$ID == 83608] = 40.650028
-cfc_geocoded$lon[cfc_geocoded$ID == 83608] = -73.954685
-
-cfc_geocoded$lat[cfc_geocoded$ID == 85702] = 40.807931
-cfc_geocoded$lon[cfc_geocoded$ID == 85702] = -73.880980
-
-cfc_geocoded$lat[cfc_geocoded$ID == 85709] = 40.835352
-cfc_geocoded$lon[cfc_geocoded$ID == 85709] = -73.862052
-
-cfc_geocoded$lat[cfc_geocoded$ID == 85243] = 40.691430
-cfc_geocoded$lon[cfc_geocoded$ID == 85243] = -73.862205
-
-cfc_geocoded$lat[cfc_geocoded$ID == 85332] = 40.682798
-cfc_geocoded$lon[cfc_geocoded$ID == 85332] = -73.769656
-
-cfc_geocoded$lat[cfc_geocoded$ID == 83623] = 40.761195
-cfc_geocoded$lon[cfc_geocoded$ID == 83623] = -73.869022
-
-cfc_geocoded$lat[cfc_geocoded$ID == 85167] = 40.704565
-cfc_geocoded$lon[cfc_geocoded$ID == 85167] = -73.811768
-
-cfc_geocoded$lat[cfc_geocoded$ID == 83296] = 40.707902
-cfc_geocoded$lon[cfc_geocoded$ID == 83296] = -73.798884
-
-cfc_geocoded$lat[cfc_geocoded$ID == 85255] = 40.670848
-cfc_geocoded$lon[cfc_geocoded$ID == 85255] = -73.769249
-
-cfc_geocoded$lat[cfc_geocoded$ID == 80971] = 40.756786
-cfc_geocoded$lon[cfc_geocoded$ID == 80971] = -73.914506
-
-cfc_geocoded$lat[cfc_geocoded$ID == 85380] = 40.636377
-cfc_geocoded$lon[cfc_geocoded$ID == 85380] = -74.165004
-
-cfc_geocoded$lat[cfc_geocoded$ID == 85356] = 40.622334
-cfc_geocoded$lon[cfc_geocoded$ID == 85356] = -74.080422
-
-cfc_geocoded =  st_as_sf(cfc_geocoded, coords = c("lon","lat")) %>% 
-  st_set_crs(st_crs(4326))
+cfc_locations = readRDS(file.path("data", "output", "cfc_geocoded.RDS"))
 
 
 ################################################################################
@@ -157,8 +89,7 @@ map = leaflet() %>%
   addLabelOnlyMarkers(data = source_notes_locations, 
                       label = ~source, 
                       labelOptions = labelOptions(noHide = T, direction = 'left', textOnly = T, 
-                                                  style=list('color'="#555555", 'fontSize'="10px"))) %>%
-  addLogo(img = "https://drive.google.com/file/d/1emuQNkY_KTgK4WjeubuXhAf1IGdmXjy8/view?usp=sharing", src = "remote")
+                                                  style=list('color'="#555555", 'fontSize'="10px")))
 
 mapview::mapshot(map, 
                  file = file.path("visuals", "individual_CFC_locations.pdf"),
@@ -167,7 +98,7 @@ mapview::mapshot(map,
 
 
 ################################################################################
-# create interactive version of SNAP map
+# create interactive version of CFC map
 ################################################################################
 
 # prep for mapping
