@@ -55,7 +55,7 @@ pal = colorBin(
 )
 
 pal2 = colorFactor(
-  palette = nycc_pal("warm")(3), 
+  palette = rev(nycc_pal("warm")(3)), 
   domain = cfc_locations$TYPE,
   na.color = "transparent"
 )
