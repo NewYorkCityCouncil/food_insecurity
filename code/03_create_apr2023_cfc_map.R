@@ -54,8 +54,21 @@ pal = colorBin(
   na.color = "transparent"
 )
 
+pal2 = colorFactor(
+  palette = nycc_pal("warm")(3), 
+  domain = cfc_locations$TYPE,
+  na.color = "transparent"
+)
+
+cfc_locations = cfc_locations %>%
+  mutate(label = paste0("<strong>Program Name:</strong> ", PROGRAM, "<br>",
+                        "<strong>Program Type:</strong> ", TYPE, "<br>",
+                        "<strong>Open Times:</strong> ", DAYS, "<br>",
+                        "<strong>Address:</strong> ", address)) 
+
+
 ################################################################################
-# plot static map - # of CFC locations in Community District
+# plot interactive map - # of CFC locations in Community District
 ################################################################################
 
 # plot
@@ -63,13 +76,24 @@ map = leaflet() %>%
   addPolygons(data = community_districts, weight = 0, color = ~pal(cfc_per100k), 
               fillOpacity = 1, smoothFactor = 0, 
               popup = ~paste0(round(cfc_per100k, 1), 
-                              " CFC locations per 100k")) %>% 
+                              " CFC locations per 100k"), 
+              group = "Community District Aggregation") %>% 
+  addCircles(data = cfc_locations, radius = 100, color = ~pal2(TYPE),
+             fillOpacity = 0.8, stroke = F, popup = ~label, 
+             group = "Individual Locations") %>% 
   addLegend_decreasing(position = "topleft", pal = pal, 
                        values = d,
                        title = paste0("# of CFC locations per 100k <br>", 
                                       "Community District residents"), 
                        opacity = 1, decreasing = T) %>%
-  addCouncilStyle(add_dists = F)
+  addLegend_decreasing(position = "topleft", pal = pal2, 
+                       values = cfc_locations$TYPE,
+                       title = paste0("CFC Location Type"), 
+                       opacity = 1, decreasing = T) %>%
+  addCouncilStyle(add_dists = F) %>%
+  addLayersControl(
+    overlayGroups = c("Individual Locations", "Community District Aggregation"),
+    options = layersControlOptions(collapsed = T))
 
 saveWidget(map, file=file.path('visuals', 
                                "number_CFC_locations_Community_District.html"))

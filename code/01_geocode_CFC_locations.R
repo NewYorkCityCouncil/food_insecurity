@@ -16,13 +16,23 @@ council_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip/d
   st_read() %>%
   st_transform(st_crs(4326))
 
+
+# color the final dots by type and combine multiples 
 cfc_locations = read_csv(file.path("data", "input", "EFAP_pdf_3_6_23.csv")) %>%
+  group_by(PROGRAM) %>%
+  mutate(n = n()) %>%
+  filter(row_number()==1) %>%
   mutate(DISTBORO = case_when(DISTBORO == "BK" ~ "Brooklyn", 
                               DISTBORO == "BX" ~ "Bronx", 
                               DISTBORO == "NY" ~ "Manhattan", 
                               DISTBORO == "QN" ~ "Queens", 
                               DISTBORO == "SI" ~ "Staten Island", ), 
-         address = paste0(DISTADD, ", ", DISTBORO, ", New York, ", DISTZIP))
+         address = paste0(DISTADD, ", ", DISTBORO, ", New York, ", DISTZIP), 
+         TYPE = case_when(n == 2 ~ "Multiple", 
+                          TYPE == "FP" ~ "Food Pantry", 
+                          TYPE == "SK" ~ "Soup Kitchen")) %>%
+  select(-n) %>%
+  ungroup()
 
 ################################################################################
 # munge the cfc locations
