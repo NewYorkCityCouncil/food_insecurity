@@ -25,6 +25,13 @@ community_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip
   st_read() %>%
   st_transform(st_crs(4326))
 
+cd_population = readxl::read_xlsx(file.path("data", "input", 
+                                            "nyc_decennialcensusdata_2010_2020_change.xlsx"), 
+                                  sheet = "2010, 2020, and Change", skip = 3) %>%
+  filter(`CD Type` == "CD") %>%
+  select(GeoID, Pop_20) %>%
+  rename(cd = GeoID, pop = Pop_20)
+
 
 ################################################################################
 # prep for plotting community district
@@ -32,16 +39,19 @@ community_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip
 
 # how many cfc in each district?
 community_districts$cfc_count = lengths(st_intersects(community_districts, cfc_geocoded))
+community_districts = community_districts %>%
+  merge(cd_population, by.x="BoroCD", by.y="cd", all.x=T)%>%
+  mutate(cfc_per100k = cfc_count/pop*100000)
 
 # prep for plotting
-d = c(min(community_districts$cfc_count, na.rm=T), 
-      max(community_districts$cfc_count, na.rm=T))
+d = c(min(community_districts$cfc_per100k, na.rm=T), 
+      max(community_districts$cfc_per100k, na.rm=T))
 
 pal = colorBin(
   palette = rev(nycc_pal("cool")(100)),
-  bins = c(0, 5, 10, 20, 45),
+  bins = c(0, 2, 4, 6, 10, 30),
   domain = d,
-  na.color = "transparent"
+  na.color = "red"
 )
 
 ################################################################################
@@ -50,12 +60,12 @@ pal = colorBin(
 
 # plot
 map = leaflet() %>% 
-  addPolygons(data = community_districts, weight = 0, color = ~pal(cfc_count), 
-              fillOpacity = 1, smoothFactor = 0, popup = ~paste0(cfc_count, " CFC locations")) %>% 
+  addPolygons(data = community_districts, weight = 0, color = ~pal(cfc_per100k), 
+              fillOpacity = 1, smoothFactor = 0, popup = ~paste0(cfc_per100k, " CFC locations")) %>% 
   addLegend_decreasing(position = "topleft", pal = pal, 
                        values = d,
-                       title = paste0("# of CFC locations in <br>", 
-                                      "Community District"), 
+                       title = paste0("# of CFC locations per 100k <br>", 
+                                      "Community District residents"), 
                        opacity = 1, decreasing = T) %>%
   addCouncilStyle(add_dists = F)
 
