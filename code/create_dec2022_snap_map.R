@@ -101,7 +101,7 @@ map = leaflet() %>%
   addLabelOnlyMarkers(data = source_notes_locations, 
                       label = ~source, 
                       labelOptions = labelOptions(noHide = T, direction = 'left', textOnly = T, 
-                                                  style=list('color'="#555555", 'fontSize'="10px"))) %>%
+                                                  style=list('color'="#555555", 'fontSize'="15px"))) %>%
   addLegend_decreasing(position = "topleft", pal = pal, 
                        values = d,
                        title = paste0("% SNAP recipients in <br>", 

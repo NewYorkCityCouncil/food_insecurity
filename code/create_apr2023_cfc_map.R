@@ -84,70 +84,84 @@ cfc_geocoded$lon[cfc_geocoded$ID == 85380] = -74.165004
 cfc_geocoded$lat[cfc_geocoded$ID == 85356] = 40.622334
 cfc_geocoded$lon[cfc_geocoded$ID == 85356] = -74.080422
 
-cfc_geocoded =  st_as_sf(cfc_geocoded, coords = c("lon","lat"),
-                         crs = st_crs(4326))
+cfc_geocoded =  st_as_sf(cfc_geocoded, coords = c("lon","lat")) %>% 
+  st_set_crs(st_crs(4326))
+
 
 ################################################################################
 # prep for plotting 
 ################################################################################
 
 # how many cfc in each district?
-districts = aggregate(cfc_geocoded, by=council_districts, FUN=sum)
+council_districts$cfc_count = lengths(st_intersects(council_districts, cfc_geocoded))
 
 # prep for plotting
-d = c(min(community_districts$perc_snap_cur, na.rm=T), 
-      max(community_districts$perc_snap_cur, na.rm=T))
+d = c(min(council_districts$cfc_count, na.rm=T), 
+      max(council_districts$cfc_count, na.rm=T))
 
 pal = colorBin(
   palette = rev(nycc_pal("cool")(100)),
-  bins = 5,
+  bins = c(0, 5, 10, 20, 30),
   domain = d,
   na.color = "transparent"
 )
 
-
-labels = community_districts %>%
-  st_drop_geometry() %>%
-  group_by(boro.x) %>% 
-  summarise(bc_snap_recipients.x = sum(bc_snap_recipients.x, na.rm = T)) %>%
-  mutate(cur_recipients_label = paste0(boro.x, ": ", format(bc_snap_recipients.x, big.mark=",")), 
-         cur_recipients_label = ifelse(is.na(bc_snap_recipients.x), NA, cur_recipients_label)) %>%
-  drop_na() 
-
-labels = boro_label_locations %>%
-  merge(labels, by.x = "boro", by.y = "boro.x", all = T)
-
-source_notes_locations$source = "SNAP enrollees: data.cityofnewyork.us/d/jye8-w4d7; Population: nyc.gov/site/planning/planning-level/nyc-population/2020-census.page"
-
+source_notes_locations$source = "Source: NYC Open Data, NYC Human Resources Administration"
 
 
 ################################################################################
-# plot static map - % of community district that receives SNAP
+# plot static map - # of CFC locations in District
 ################################################################################
 
 # plot
 map = leaflet() %>% 
-  addPolygons(data = community_districts, weight = 0, color = ~pal(perc_snap_cur), 
+  addPolygons(data = council_districts, weight = 0, color = ~pal(cfc_count), 
               fillOpacity = 1, smoothFactor = 0) %>% 
-  addCouncilStyle(add_dists = F) %>%
-  addLabelOnlyMarkers(data = labels, 
-                      label = ~cur_recipients_label, 
+  addCouncilStyle(add_dists = T) %>%
+  addLabelOnlyMarkers(data = source_notes_locations, 
+                      label = ~source, 
                       labelOptions = labelOptions(noHide = T, direction = 'left', textOnly = T, 
-                                                  style=list('color'="#555555", 'fontSize'="20px"))) %>%
+                                                  style=list('color'="#555555", 'fontSize'="15px"))) %>%
+  addLabelOnlyMarkers(data = councildown:::dists %>% 
+                        filter(coun_dist %in% 
+                                 council_districts$CounDist[council_districts$cfc_count >= 10]), 
+                      lat = ~lab_y, lng = ~lab_x, label = ~coun_dist,
+                      labelOptions = labelOptions(permanent = TRUE, noHide = TRUE,
+                                                  textOnly = TRUE,
+                                                  textsize = 12,
+                                                  direction = "center",
+                                                  style = list(color = "white",
+                                                               'font-family' = "'Open Sans', sans-serif",
+                                                               'font-weight' = "bold"))) %>%
+  addLegend_decreasing(position = "topleft", pal = pal, 
+                       values = d,
+                       title = paste0("# of CFC locations in <br>", 
+                                      "Council District"), 
+                       opacity = 1, decreasing = T) 
+
+mapview::mapshot(map, 
+                 file = file.path("visuals", "number_CFC_locations.pdf"),
+                 remove_controls = c("homeButton", "layersControl", "zoomControl"), 
+                 vwidth = 1000, vheight = 850)
+
+
+
+################################################################################
+# plot static map - # of CFC locations in District
+################################################################################
+
+# plot
+map = leaflet() %>% 
+  addCircles(data = cfc_geocoded, radius = 20) %>% 
+  addCouncilStyle(add_dists = T) %>%
   addLabelOnlyMarkers(data = source_notes_locations, 
                       label = ~source, 
                       labelOptions = labelOptions(noHide = T, direction = 'left', textOnly = T, 
                                                   style=list('color'="#555555", 'fontSize'="10px"))) %>%
-  addLegend_decreasing(position = "topleft", pal = pal, 
-                       values = d,
-                       title = paste0("% SNAP recipients in <br>", 
-                                      "Community District"), 
-                       labFormat = labelFormat(suffix = "%", 
-                                               transform = function(x){x*100}),
-                       opacity = 1, decreasing = T)
+  addLogo(img = "https://drive.google.com/file/d/1emuQNkY_KTgK4WjeubuXhAf1IGdmXjy8/view?usp=sharing", src = "remote")
 
 mapview::mapshot(map, 
-                 file = file.path("visuals", "percent_individuals_SNAP_benefits_cur.pdf"),
+                 file = file.path("visuals", "individual_CFC_locations.pdf"),
                  remove_controls = c("homeButton", "layersControl", "zoomControl"), 
                  vwidth = 1000, vheight = 850)
 
