@@ -54,6 +54,8 @@ community_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip
          borough_letter = ifelse(boro.x == "Brooklyn", "K", borough_letter)) %>%
   drop_na(perc_snap_cur)
 
+borough = st_read("https://data.cityofnewyork.us/api/geospatial/tqmj-j8zm?method=export&format=GeoJSON") %>%
+  st_transform(st_crs(4326)) 
 
 ################################################################################
 # prep for plotting 
@@ -142,6 +144,7 @@ pal2 = colorBin(
 )
 
 map = leaflet() %>% 
+  addPolygons(data = borough, weight = 1, color = "#111111", fillOpacity = 0) %>%
   addPolygons(data = community_districts, weight = 0, color = ~pal2(perc_change_snap), 
               fillOpacity = 1, smoothFactor = 0, popup = ~label, 
               group = "Change in SNAP recipients") %>% 
