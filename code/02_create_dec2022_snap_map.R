@@ -150,7 +150,6 @@ pal2 = colorBin(
 )
 
 map = leaflet() %>% 
-  addPolygons(data = borough, weight = 1, color = "#111111", fillOpacity = 0) %>%
   addPolygons(data = community_districts, weight = 0, color = ~pal2(perc_change_snap), 
               fillOpacity = 1, smoothFactor = 0, popup = ~label, 
               group = "Change in SNAP recipients") %>% 
