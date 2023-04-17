@@ -49,7 +49,7 @@ d = c(min(community_districts$cfc_per100k, na.rm=T),
 
 pal = colorBin(
   palette = rev(nycc_pal("cool")(100)),
-  bins = c(0, 2, 4, 6, 10, 30),
+  bins = c(0, 2, 4, 6, 15, 30),
   domain = d,
   na.color = "transparent"
 )
@@ -73,10 +73,12 @@ cfc_locations = cfc_locations %>%
 
 # plot
 map = leaflet() %>% 
-  addPolygons(data = community_districts, weight = 0, color = ~pal(cfc_per100k), 
+  addPolygons(data = community_districts %>% 
+                filter(!is.na(cfc_per100k)), 
+              weight = 0, color = ~pal(cfc_per100k), 
               fillOpacity = 1, smoothFactor = 0, 
               popup = ~paste0(round(cfc_per100k, 1), 
-                              " CFC locations per 100k"), 
+                              " CFC locations per 100k residents"), 
               group = "Community District Aggregation") %>% 
   addCircles(data = cfc_locations, radius = 100, color = ~pal2(TYPE),
              fillOpacity = 0.8, stroke = F, popup = ~label, 
