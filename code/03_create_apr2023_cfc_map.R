@@ -25,6 +25,11 @@ community_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip
   st_read() %>%
   st_transform(st_crs(4326))
 
+cd_names = read_csv("https://data.cityofnewyork.us/resource/ruf7-3wgc.csv") %>%
+  select(community_board_1, neighborhoods) %>%
+  rename(cd = community_board_1)
+
+
 cd_population = readxl::read_xlsx(file.path("data", "input", 
                                             "nyc_decennialcensusdata_2010_2020_change.xlsx"), 
                                   sheet = "2010, 2020, and Change", skip = 3) %>%
@@ -38,10 +43,11 @@ cd_population = readxl::read_xlsx(file.path("data", "input",
 ################################################################################
 
 # how many cfc in each district?
-community_districts$cfc_count = lengths(st_intersects(community_districts, cfc_geocoded))
+community_districts$cfc_count = lengths(st_intersects(community_districts, cfc_locations))
 community_districts = community_districts %>%
   merge(cd_population, by.x="BoroCD", by.y="cd", all.x=T)%>%
-  mutate(cfc_per100k = cfc_count/pop*100000)
+  mutate(cfc_per100k = cfc_count/pop*100000) %>%
+  merge(cd_names, by.x = "BoroCD", by.y = "cd", all.x = T)
 
 # prep for plotting
 d = c(min(community_districts$cfc_per100k, na.rm=T), 
@@ -55,7 +61,7 @@ pal = colorBin(
 )
 
 pal2 = colorFactor(
-  palette = rev(nycc_pal("warm")(3)), 
+  palette = rev(colorRampPalette(councildown:::warm)(3)), 
   domain = cfc_locations$TYPE,
   na.color = "transparent"
 )
@@ -64,7 +70,7 @@ cfc_locations = cfc_locations %>%
   mutate(label = paste0("<strong>Program Name:</strong> ", PROGRAM, "<br>",
                         "<strong>Program Type:</strong> ", TYPE, "<br>",
                         "<strong>Open Times:</strong> ", DAYS, "<br>",
-                        "<strong>Address:</strong> ", address)) 
+                        "<strong>Address:</strong> ", address))
 
 
 ################################################################################
@@ -80,9 +86,17 @@ map = leaflet() %>%
               popup = ~paste0(round(cfc_per100k, 1), 
                               " CFC locations per 100k residents"), 
               group = "Community District Aggregation") %>% 
-  addCircles(data = cfc_locations, radius = 100, color = ~pal2(TYPE),
-             fillOpacity = 0.8, stroke = F, popup = ~label, 
-             group = "Individual Locations") %>% 
+  addCircles(data = cfc_locations[cfc_locations$TYPE == "Food Pantry", ], 
+             radius = 100, fillColor = ~pal2(TYPE), 
+             opacity = 1, fillOpacity = 0.8, color = "black", weight = 0.75, 
+             popup = ~label, group = "Individual Locations") %>% 
+  addCircles(data = cfc_locations[cfc_locations$TYPE == "Soup Kitchen", ], 
+             radius = 100, fillColor = ~pal2(TYPE), 
+             opacity = 1, fillOpacity = 0.8, color = "white", weight = 0.75, 
+             popup = ~label, group = "Individual Locations") %>%
+  addCircles(data = cfc_locations[cfc_locations$TYPE == "Multiple", ], 
+             radius = 100, fillColor = ~pal2(TYPE), fillOpacity = 0.8, stroke = F, 
+             popup = ~label, group = "Individual Locations") %>%
   addLegend_decreasing(position = "topleft", pal = pal, 
                        values = d,
                        title = paste0("# of CFC locations per 100k <br>", 
