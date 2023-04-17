@@ -41,6 +41,10 @@ cd_population = readxl::read_xlsx(file.path("data", "input",
   filter(`CD Type` == "CD") %>%
   select(GeoID, Pop_20) %>%
   rename(cd = GeoID, pop = Pop_20)
+
+cd_names = read_csv("https://data.cityofnewyork.us/resource/ruf7-3wgc.csv") %>%
+  select(community_board_1, neighborhoods) %>%
+  rename(cd = community_board_1)
   
 community_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip/data-maps/open-data/nycd_21d.zip") %>%
   st_read() %>%
@@ -52,7 +56,8 @@ community_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip
          perc_snap_pre = bc_snap_recipients.y/pop, 
          borough_letter = substr(boro.x, 1, 1), 
          borough_letter = ifelse(boro.x == "Brooklyn", "K", borough_letter)) %>%
-  drop_na(perc_snap_cur)
+  drop_na(perc_snap_cur) %>%
+  merge(cd_names, by.x = "BoroCD", by.y = "cd", all.x = T)
 
 borough = st_read("https://data.cityofnewyork.us/api/geospatial/tqmj-j8zm?method=export&format=GeoJSON") %>%
   st_transform(st_crs(4326)) 
@@ -125,6 +130,7 @@ mapview::mapshot(map,
 community_districts = community_districts %>%
   mutate(perc_change_snap = round(((bc_snap_recipients.x-bc_snap_recipients.y)/bc_snap_recipients.y)*100, 0), 
          label = paste0("<strong>Community District #</strong>: ", BoroCD, "<br>",
+                        "<strong>Neighborhoods covered</strong>: ", neighborhoods, "<br>",
                         "<strong>Population (2020):</strong> ", format(pop, big.mark = ","), "<br>", 
                         "<strong>Number of SNAP recipients (Dec 2021):</strong> ", 
                             format(bc_snap_recipients.x, big.mark = ","), "<br>",
