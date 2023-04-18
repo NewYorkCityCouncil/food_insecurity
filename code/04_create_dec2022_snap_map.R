@@ -113,16 +113,18 @@ map = leaflet() %>%
                                       "Community District"), 
                        labFormat = labelFormat(suffix = "%", 
                                                transform = function(x){x*100}),
-                       opacity = 1, decreasing = T) %>%
+                       opacity = 1, decreasing = T, 
+                       group = "% SNAP Dec 2022") %>%
   addLegend_decreasing(position = "topleft", pal = pal2, 
                      values = community_districts$perc_change_snap,
                      title = paste0("% change in SNAP recipients <br>", 
                                     "from Dec 2019 to Dec 2022"), 
                      labFormat = labelFormat(suffix = "%"),
-                     opacity = 1, decreasing = T) %>%
+                     opacity = 1, decreasing = T, 
+                     group = "Change in SNAP recipients") %>%
   addLayersControl(
-    overlayGroups = c("% SNAP Dec 2022", "Change in SNAP recipients"),
-    options = layersControlOptions(collapsed = T))
+    baseGroups = c("% SNAP Dec 2022", "Change in SNAP recipients"),
+    options = layersControlOptions(collapsed = F, autoZIndex = T))
 
 saveWidget(map, file=file.path('visuals', 
                                "percent_individuals_SNAP_benefits.html"))
