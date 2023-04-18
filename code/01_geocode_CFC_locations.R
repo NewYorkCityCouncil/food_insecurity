@@ -19,9 +19,9 @@ council_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip/d
 
 # color the final dots by type and combine multiples 
 cfc_locations = read_csv(file.path("data", "input", "EFAP_pdf_3_6_23.csv")) %>%
-  group_by(PROGRAM) %>%
-  mutate(n = n()) %>%
-  filter(row_number()==1) %>%
+  group_by(PROGRAM) %>% # unique locations (combine multiples)
+  mutate(n = n()) %>% #count how many programs there are per location
+  filter(row_number()==1) %>% # just keep one instance
   mutate(DISTBORO = case_when(DISTBORO == "BK" ~ "Brooklyn", 
                               DISTBORO == "BX" ~ "Bronx", 
                               DISTBORO == "NY" ~ "Manhattan", 
@@ -30,7 +30,7 @@ cfc_locations = read_csv(file.path("data", "input", "EFAP_pdf_3_6_23.csv")) %>%
          address = paste0(DISTADD, ", ", DISTBORO, ", New York, ", DISTZIP), 
          TYPE = case_when(n == 2 ~ "Multiple", 
                           TYPE == "FP" ~ "Food Pantry", 
-                          TYPE == "SK" ~ "Soup Kitchen")) %>%
+                          TYPE == "SK" ~ "Soup Kitchen")) %>% #rename types
   select(-n) %>%
   ungroup()
 

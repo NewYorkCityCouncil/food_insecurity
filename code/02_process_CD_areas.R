@@ -9,10 +9,17 @@ source("code/00_load_dependencies.R")
 
 
 ################################################################################
-# read in SNAP data
+# read in current & pre-pandemic SNAP data
 ################################################################################
 
+### socrata query parameters
+# https://data.cityofnewyork.us/resource/jye8-w4d7.json?$query=SELECT `month`, `boro`, `cd`, `bc_snap_recipients`, `bc_snap_households`
+# WHERE `month` = "2022-12-01T00:00:00" :: floating_timestamp
+# ORDER BY `month` DESC NULL LAST
+
 current_snap_population = fromJSON("https://data.cityofnewyork.us/resource/jye8-w4d7.json?$query=SELECT%20%60month%60%2C%20%60boro%60%2C%20%60cd%60%2C%20%60bc_snap_recipients%60%2C%20%60bc_snap_households%60%0AWHERE%20%60month%60%20%3D%20%222022-12-01T00%3A00%3A00%22%20%3A%3A%20floating_timestamp%0AORDER%20BY%20%60month%60%20DESC%20NULL%20LAST")
+
+# recode and fix datatypes as numeric
 current_snap_population = current_snap_population %>%
   mutate(og_cd =cd, 
          cd = gsub("M", "1", cd), 
@@ -23,7 +30,14 @@ current_snap_population = current_snap_population %>%
          bc_snap_recipients = as.numeric(bc_snap_recipients), 
          bc_snap_households = as.numeric(bc_snap_households)) 
 
+### socrata query parameters
+# https://data.cityofnewyork.us/resource/jye8-w4d7.json?$query=SELECT `month`, `boro`, `cd`, `bc_snap_recipients`, `bc_snap_households`
+# WHERE `month` = "2019-12-01T00:00:00" :: floating_timestamp
+# ORDER BY `month` DESC NULL LAST
+
 pre_pandemic_snap_population = fromJSON("https://data.cityofnewyork.us/resource/jye8-w4d7.json?$query=SELECT%20%60month%60%2C%20%60boro%60%2C%20%60cd%60%2C%20%60bc_snap_recipients%60%2C%20%60bc_snap_households%60%0AWHERE%20%60month%60%20%3D%20%222019-12-01T00%3A00%3A00%22%20%3A%3A%20floating_timestamp%0AORDER%20BY%20%60month%60%20DESC%20NULL%20LAST")
+
+# recode and fix datatypes as numeric
 pre_pandemic_snap_population = pre_pandemic_snap_population %>%
   mutate(og_cd = cd, 
          cd = gsub("M", "1", cd), 
@@ -34,6 +48,8 @@ pre_pandemic_snap_population = pre_pandemic_snap_population %>%
          bc_snap_recipients = as.numeric(bc_snap_recipients), 
          bc_snap_households = as.numeric(bc_snap_households)) 
 
+# nyc dcp planning population data source
+# https://www.nyc.gov/site/planning/planning-level/nyc-population/2020-census.page
 
 cd_population = readxl::read_xlsx(file.path("data", "input", 
                                             "nyc_decennialcensusdata_2010_2020_change.xlsx"), 
@@ -42,10 +58,12 @@ cd_population = readxl::read_xlsx(file.path("data", "input",
   select(GeoID, Pop_20) %>%
   rename(cd = GeoID, pop = Pop_20)
 
+# get neighborhood names for each community district
 cd_names = read_csv("https://data.cityofnewyork.us/resource/ruf7-3wgc.csv") %>%
   select(community_board_1, neighborhoods) %>%
   rename(cd = community_board_1)
 
+# get spatial boundaries, join, create normalized values & percent change
 community_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip/data-maps/open-data/nycd_21d.zip") %>%
   st_read() %>%
   st_transform(st_crs(4326)) %>% 
@@ -70,9 +88,10 @@ council_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip/d
   st_transform(st_crs(4326))
 
 cfc_locations = readRDS(file.path("data", "output", "cfc_geocoded.RDS")) %>%
-  st_as_sf(coords = c("lon","lat")) %>% 
+  st_as_sf(coords = c("lon","lat")) %>% # create points
   st_set_crs(st_crs(4326))
 
+# count the number of cfc locations that fall in each community district and normalize by population
 community_districts$cfc_count = lengths(st_intersects(community_districts, cfc_locations))
 community_districts = community_districts %>%
   mutate(cfc_per100k = cfc_count/pop*100000)
