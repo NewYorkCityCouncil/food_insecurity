@@ -108,8 +108,6 @@ pal = colorBin(
   na.color = "transparent"
 )
 
-source_notes_locations$source = "Source: NYC Open Data, NYC Human Resources Administration"
-
 
 ################################################################################
 # plot static map - # of CFC locations in District
@@ -121,10 +119,7 @@ map = leaflet() %>%
               fillOpacity = 1, smoothFactor = 0) %>% 
   addCouncilStyle(add_dists = T, 
                   highlight_dists = council_districts$CounDist[council_districts$cfc_count >= 10]) %>%
-  addLabelOnlyMarkers(data = source_notes_locations, 
-                      label = ~source, 
-                      labelOptions = labelOptions(noHide = T, direction = 'left', textOnly = T, 
-                                                  style=list('color'="#555555", 'fontSize'="15px"))) %>%
+  addSourceText("Source: NYC Open Data, NYC Human Resources Administration") %>%
   addLegend_decreasing(position = "topleft", pal = pal, 
                        values = d,
                        title = paste0("# of CFC locations in <br>", 

@@ -16,7 +16,6 @@ source("code/00_load_dependencies.R")
 # https://data.cityofnewyork.us/resource/jye8-w4d7.json?$query=SELECT `month`, `boro`, `cd`, `bc_snap_recipients`, `bc_snap_households`
 # WHERE `month` = "2022-12-01T00:00:00" :: floating_timestamp
 # ORDER BY `month` DESC NULL LAST
-
 current_snap_population = fromJSON("https://data.cityofnewyork.us/resource/jye8-w4d7.json?$query=SELECT%20%60month%60%2C%20%60boro%60%2C%20%60cd%60%2C%20%60bc_snap_recipients%60%2C%20%60bc_snap_households%60%0AWHERE%20%60month%60%20%3D%20%222022-12-01T00%3A00%3A00%22%20%3A%3A%20floating_timestamp%0AORDER%20BY%20%60month%60%20DESC%20NULL%20LAST")
 
 # recode and fix datatypes as numeric
@@ -34,7 +33,6 @@ current_snap_population = current_snap_population %>%
 # https://data.cityofnewyork.us/resource/jye8-w4d7.json?$query=SELECT `month`, `boro`, `cd`, `bc_snap_recipients`, `bc_snap_households`
 # WHERE `month` = "2019-12-01T00:00:00" :: floating_timestamp
 # ORDER BY `month` DESC NULL LAST
-
 pre_pandemic_snap_population = fromJSON("https://data.cityofnewyork.us/resource/jye8-w4d7.json?$query=SELECT%20%60month%60%2C%20%60boro%60%2C%20%60cd%60%2C%20%60bc_snap_recipients%60%2C%20%60bc_snap_households%60%0AWHERE%20%60month%60%20%3D%20%222019-12-01T00%3A00%3A00%22%20%3A%3A%20floating_timestamp%0AORDER%20BY%20%60month%60%20DESC%20NULL%20LAST")
 
 # recode and fix datatypes as numeric
@@ -50,7 +48,6 @@ pre_pandemic_snap_population = pre_pandemic_snap_population %>%
 
 # nyc dcp planning population data source
 # https://www.nyc.gov/site/planning/planning-level/nyc-population/2020-census.page
-
 cd_population = readxl::read_xlsx(file.path("data", "input", 
                                             "nyc_decennialcensusdata_2010_2020_change.xlsx"), 
                                   sheet = "2010, 2020, and Change", skip = 3) %>%

@@ -40,8 +40,6 @@ labels = community_districts %>%
 labels = boro_label_locations %>%
   merge(labels, by.x = "boro", by.y = "boro.x", all = T)
 
-source_notes_locations$source = "Source: NYC Open Data, Department of City Planning"
-
 
 ################################################################################
 # plot static map - % of community district that receives SNAP
@@ -56,10 +54,7 @@ map = leaflet() %>%
                       label = ~cur_recipients_label, 
                       labelOptions = labelOptions(noHide = T, direction = 'left', textOnly = T, 
                                                   style=list('color'="#555555", 'fontSize'="20px"))) %>%
-  addLabelOnlyMarkers(data = source_notes_locations, 
-                      label = ~source, 
-                      labelOptions = labelOptions(noHide = T, direction = 'left', textOnly = T, 
-                                                  style=list('color'="#555555", 'fontSize'="15px"))) %>%
+  addSourceText("Source: NYC Open Data, Department of City Planning") %>%
   addLegend_decreasing(position = "topleft", pal = pal, 
                        values = d,
                        title = paste0("% SNAP recipients in <br>", 

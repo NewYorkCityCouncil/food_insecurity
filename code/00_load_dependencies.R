@@ -39,6 +39,8 @@ unzip_sf <- function(zip_url) {
 rm(list.of.packages,new.packages)
 
 
+# creating points that we will use to add labels in the map 
+#     these are just well placed locations for text on the map
 geo = st_sfc(st_point(c(-73.9927626, 40.7916781)), 
              st_point(c(-73.757623, 40.631025)), 
              st_point(c(-74.105017, 40.658491)), 
@@ -50,8 +52,4 @@ boro_label_locations = st_sf(boro = c("Manhattan", "Queens", "Staten Island",
                              geometry = geo) %>% 
   st_set_crs(st_crs(4326))
 
-
-geo = st_sfc(st_point(c(-73.645, 40.5)))
-source_notes_locations = st_sf(source = "", 
-                               geometry = geo)
 
