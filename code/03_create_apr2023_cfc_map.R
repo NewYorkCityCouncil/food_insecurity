@@ -1,5 +1,4 @@
 source("code/00_load_dependencies.R")
-source("../tokens.R")
 
 ################################################################################
 # Created by: Anne Driscoll
@@ -13,41 +12,20 @@ source("../tokens.R")
 # read in data
 ################################################################################
 
-council_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip/data-maps/open-data/nycc_21d.zip") %>%
-  st_read() %>%
-  st_transform(st_crs(4326))
+council_districts = read_rds(file.path("data", "output", 
+                                       "council_district_data.RDS"))
+
+community_districts = read_rds(file.path("data", "output", 
+                                         "community_district_data.RDS"))
 
 cfc_locations = readRDS(file.path("data", "output", "cfc_geocoded.RDS")) %>%
   st_as_sf(coords = c("lon","lat")) %>% 
   st_set_crs(st_crs(4326))
 
-community_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip/data-maps/open-data/nycd_21d.zip") %>%
-  st_read() %>%
-  st_transform(st_crs(4326))
-
-cd_names = read_csv("https://data.cityofnewyork.us/resource/ruf7-3wgc.csv") %>%
-  select(community_board_1, neighborhoods) %>%
-  rename(cd = community_board_1)
-
-
-cd_population = readxl::read_xlsx(file.path("data", "input", 
-                                            "nyc_decennialcensusdata_2010_2020_change.xlsx"), 
-                                  sheet = "2010, 2020, and Change", skip = 3) %>%
-  filter(`CD Type` == "CD") %>%
-  select(GeoID, Pop_20) %>%
-  rename(cd = GeoID, pop = Pop_20)
-
 
 ################################################################################
 # prep for plotting community district
 ################################################################################
-
-# how many cfc in each district?
-community_districts$cfc_count = lengths(st_intersects(community_districts, cfc_locations))
-community_districts = community_districts %>%
-  merge(cd_population, by.x="BoroCD", by.y="cd", all.x=T)%>%
-  mutate(cfc_per100k = cfc_count/pop*100000) %>%
-  merge(cd_names, by.x = "BoroCD", by.y = "cd", all.x = T)
 
 # prep for plotting
 d = c(min(community_districts$cfc_per100k, na.rm=T), 
@@ -118,10 +96,6 @@ saveWidget(map, file=file.path('visuals',
 ################################################################################
 # prep for plotting council district
 ################################################################################
-
-
-# how many cfc in each district?
-council_districts$cfc_count = lengths(st_intersects(council_districts, cfc_geocoded))
 
 # prep for plotting
 d = c(min(council_districts$cfc_count, na.rm=T), 
