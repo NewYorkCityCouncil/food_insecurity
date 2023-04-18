@@ -31,9 +31,13 @@ cfc_locations = readRDS(file.path("data", "output", "cfc_geocoded.RDS")) %>%
 d = c(min(community_districts$cfc_per100k, na.rm=T), 
       max(community_districts$cfc_per100k, na.rm=T))
 
+breaks = classInt::classIntervals(community_districts$cfc_per100k, n = 6, style = 'jenks')$brks
+breaks[length(breaks)] = breaks[length(breaks)] + 0.5
+breaks = round(breaks, 0)
+
 pal = colorBin(
   palette = rev(nycc_pal("cool")(100)),
-  bins = c(0, 2, 4, 6, 15, 30),
+  bins = breaks,
   domain = d,
   na.color = "transparent"
 )
