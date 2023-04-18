@@ -93,6 +93,7 @@ community_districts$cfc_count = lengths(st_intersects(community_districts, cfc_l
 community_districts = community_districts %>%
   mutate(cfc_per100k = cfc_count/pop*100000)
 
+# get number of cfc locations by council district for static map for committee report 
 council_districts$cfc_count = lengths(st_intersects(council_districts, cfc_locations))
 
 
