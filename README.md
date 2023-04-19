@@ -1,6 +1,6 @@
 ## Oversight: Food Insecurity in New York City 
 
-An associated webpage for this analysis can be found [on the council website](https://council.nyc.gov/data/emergency-food-in-nyc/): 
+An associated webpage for this analysis can be found [on the council website](https://council.nyc.gov/data/emergency-food-in-nyc/).
 
 ### Data sources
 
