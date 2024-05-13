@@ -1,8 +1,9 @@
 source("code/00_load_dependencies.R")
+library(councilverse)
 
 ################################################################################
 # Created by: Anne Driscoll
-# Last edited on: 4/13/2023
+# Last edited on: 5/13/2024
 #
 # This file processes community district SNAP data + council district CFC data
 ################################################################################
@@ -12,16 +13,12 @@ source("code/00_load_dependencies.R")
 # read in current & pre-pandemic SNAP data
 ################################################################################
 
-### socrata query parameters
-# https://data.cityofnewyork.us/resource/jye8-w4d7.json?$query=SELECT `month`, `boro`, `cd`, `bc_snap_recipients`, `bc_snap_households`
-# WHERE `month` = "2022-12-01T00:00:00" :: floating_timestamp
-# ORDER BY `month` DESC NULL LAST
-current_snap_population = fromJSON("https://data.cityofnewyork.us/resource/jye8-w4d7.json?$query=SELECT%20%60month%60%2C%20%60boro%60%2C%20%60cd%60%2C%20%60bc_snap_recipients%60%2C%20%60bc_snap_households%60%0AWHERE%20%60month%60%20%3D%20%222022-12-01T00%3A00%3A00%22%20%3A%3A%20floating_timestamp%0AORDER%20BY%20%60month%60%20DESC%20NULL%20LAST")
+current_snap_population = fromJSON('https://data.cityofnewyork.us/resource/5awp-wfkt.json?$limit=150000') %>%
+  filter(month == '2024-03-01T00:00:00.000')
 
 # recode and fix datatypes as numeric
 current_snap_population = current_snap_population %>%
-  mutate(og_cd =cd, 
-         cd = gsub("M", "1", cd), 
+  mutate(cd = gsub("M", "1", community_district), 
          cd = gsub("B", "2", cd),
          cd = gsub("K", "3", cd),  
          cd = gsub("Q", "4", cd), 
@@ -29,16 +26,12 @@ current_snap_population = current_snap_population %>%
          bc_snap_recipients = as.numeric(bc_snap_recipients), 
          bc_snap_households = as.numeric(bc_snap_households)) 
 
-### socrata query parameters
-# https://data.cityofnewyork.us/resource/jye8-w4d7.json?$query=SELECT `month`, `boro`, `cd`, `bc_snap_recipients`, `bc_snap_households`
-# WHERE `month` = "2019-12-01T00:00:00" :: floating_timestamp
-# ORDER BY `month` DESC NULL LAST
-pre_pandemic_snap_population = fromJSON("https://data.cityofnewyork.us/resource/jye8-w4d7.json?$query=SELECT%20%60month%60%2C%20%60boro%60%2C%20%60cd%60%2C%20%60bc_snap_recipients%60%2C%20%60bc_snap_households%60%0AWHERE%20%60month%60%20%3D%20%222019-12-01T00%3A00%3A00%22%20%3A%3A%20floating_timestamp%0AORDER%20BY%20%60month%60%20DESC%20NULL%20LAST")
+pre_snap_population = fromJSON('https://data.cityofnewyork.us/resource/5awp-wfkt.json?$limit=150000') %>%
+  filter(month == '2023-03-01T00:00:00.000')
 
 # recode and fix datatypes as numeric
-pre_pandemic_snap_population = pre_pandemic_snap_population %>%
-  mutate(og_cd = cd, 
-         cd = gsub("M", "1", cd), 
+pre_snap_population = pre_snap_population %>%
+  mutate(cd = gsub("M", "1", community_district), 
          cd = gsub("B", "2", cd),
          cd = gsub("K", "3", cd),  
          cd = gsub("Q", "4", cd), 
@@ -65,12 +58,12 @@ community_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip
   st_read() %>%
   st_transform(st_crs(4326)) %>% 
   merge(current_snap_population, by.x = "BoroCD", by.y = "cd", all.x = T) %>%
-  merge(pre_pandemic_snap_population, by.x = "BoroCD", by.y = "cd", all.x = T) %>%
+  merge(pre_snap_population, by.x = "BoroCD", by.y = "cd", all.x = T) %>%
   merge(cd_population, by.x = "BoroCD", by.y = "cd", all.x = T) %>%
   mutate(perc_snap_cur = bc_snap_recipients.x/pop, 
          perc_snap_pre = bc_snap_recipients.y/pop, 
-         borough_letter = substr(boro.x, 1, 1), 
-         borough_letter = ifelse(boro.x == "Brooklyn", "K", borough_letter), 
+         borough_letter = substr(borough.x, 1, 1), 
+         borough_letter = ifelse(borough.x == "Brooklyn", "K", borough_letter), 
          perc_change_snap = round(((bc_snap_recipients.x-bc_snap_recipients.y)/bc_snap_recipients.y)*100, 0)) %>%
   drop_na(perc_snap_cur) %>%
   merge(cd_names, by.x = "BoroCD", by.y = "cd", all.x = T)
@@ -82,6 +75,7 @@ community_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip
 
 council_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip/data-maps/open-data/nycc_21d.zip") %>%
   st_read() %>%
+  
   st_transform(st_crs(4326))
 
 cfc_locations = readRDS(file.path("data", "output", "cfc_geocoded.RDS")) %>%
