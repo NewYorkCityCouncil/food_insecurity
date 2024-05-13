@@ -24,7 +24,7 @@ d = c(min(community_districts$perc_snap_cur, na.rm=T),
 
 quantile(community_districts$perc_snap_cur, c(0, .2, .4, .6, .8, 1))*100
 pal = colorBin(
-  palette = rev(pal_nycc("cool")),
+  palette = pal_nycc("cool"),
   bins = 4,
   domain = d,
   na.color = "transparent"
@@ -85,27 +85,27 @@ community_districts = community_districts %>%
                         "<strong>Population (2020):</strong> ", format(pop, big.mark = ","), "<br>", 
                         "<strong>Number of SNAP recipients (Dec 2021):</strong> ", 
                             format(bc_snap_recipients.x, big.mark = ","), "<br>",
-                        "<strong>% of Population receiving SNAP (Dec 2021):</strong> ", round(perc_snap_cur*100, 0), "%<br>",
-                        "<strong>% growth in recipients since 2019:</strong> ", 
-                        perc_change_snap, "%")) 
+                        "<strong>% of Population receiving SNAP (Mar 24):</strong> ", round(perc_snap_cur*100, 0), "%<br>",
+                        "<strong>% point growth in recipients since 2023:</strong> ", 
+                        perc_point_change_snap, "%")) 
 
-d = c(min(community_districts$perc_change_snap, na.rm=T), 
-      max(community_districts$perc_change_snap, na.rm=T))
+d = c(min(community_districts$perc_point_change_snap, na.rm=T), 
+      max(community_districts$perc_point_change_snap, na.rm=T))
 
 pal2 = colorBin(
   palette = rev(pal_nycc("diverging")),
-  bins = c(-15, -7, -1, 1, 7, 15),
+  bins = c(-2, -0.7, -.1, .1, 0.7, 2),
   domain = d,
   na.color = "transparent"
 )
 
 map = leaflet() %>% 
-  addPolygons(data = community_districts, weight = 0, color = ~pal2(perc_change_snap), 
+  addPolygons(data = community_districts, weight = 0, color = ~pal2(perc_point_change_snap), 
               fillOpacity = 1, smoothFactor = 0, popup = ~label, 
-              group = "Change in SNAP recipients") %>% 
+              group = "% point change in SNAP recipients") %>% 
   addPolygons(data = community_districts, weight = 0, color = ~pal(perc_snap_cur), 
               fillOpacity = 1, smoothFactor = 0, popup = ~label, 
-              group = "% SNAP Dec 2022")  %>% 
+              group = "% SNAP Mar 2024")  %>% 
   addCouncilStyle(add_dists = F) %>%
   addLegend_decreasing(position = "topleft", pal = pal, 
                        values = community_districts$perc_snap_cur,
@@ -114,16 +114,16 @@ map = leaflet() %>%
                        labFormat = labelFormat(suffix = "%", 
                                                transform = function(x){x*100}),
                        opacity = 1, decreasing = T, 
-                       group = "% SNAP Dec 2022") %>%
+                       group = "% SNAP Mar 2024") %>%
   addLegend_decreasing(position = "topleft", pal = pal2, 
-                     values = community_districts$perc_change_snap,
-                     title = paste0("% change in SNAP recipients <br>", 
+                     values = community_districts$perc_point_change_snap,
+                     title = paste0("% point change in SNAP recipients <br>", 
                                     "from Mar 2023 to Mar 2024"), 
                      labFormat = labelFormat(suffix = "%"),
                      opacity = 1, decreasing = T, 
-                     group = "Change in SNAP recipients") %>%
+                     group = "% point change in SNAP recipients") %>%
   addLayersControl(
-    baseGroups = c("% SNAP Dec 2022", "Change in SNAP recipients"),
+    baseGroups = c("% SNAP Mar 2024", "% point change in SNAP recipients"),
     options = layersControlOptions(collapsed = F, autoZIndex = T))
 
 saveWidget(map, file=file.path('visuals', 
@@ -148,3 +148,4 @@ community_districts %>%
          `Mar 2023 SNAP recipients` = bc_snap_recipients.x, 
          `District SNAP recipients as % of population` = perc_snap_cur) %>%
   write.xlsx("visuals/info_table.xlsx")
+

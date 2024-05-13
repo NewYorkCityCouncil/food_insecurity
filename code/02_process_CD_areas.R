@@ -64,10 +64,14 @@ community_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip
          perc_snap_pre = bc_snap_recipients.y/pop, 
          borough_letter = substr(borough.x, 1, 1), 
          borough_letter = ifelse(borough.x == "Brooklyn", "K", borough_letter), 
-         perc_change_snap = round(((bc_snap_recipients.x-bc_snap_recipients.y)/bc_snap_recipients.y)*100, 0)) %>%
+         perc_change_snap = round(((bc_snap_recipients.x-bc_snap_recipients.y)/bc_snap_recipients.y)*100, 0), 
+         perc_point_change_snap = round((perc_snap_cur-perc_snap_pre)*100, 1)) %>%
   drop_na(perc_snap_cur) %>%
   merge(cd_names, by.x = "BoroCD", by.y = "cd", all.x = T)
 
+
+saveRDS(community_districts, 
+        file.path("data", "output", "community_district_data.RDS"))
 
 ################################################################################
 # read in CFC data
@@ -89,14 +93,6 @@ community_districts = community_districts %>%
 
 # get number of cfc locations by council district for static map for committee report 
 council_districts$cfc_count = lengths(st_intersects(council_districts, cfc_locations))
-
-
-################################################################################
-# save data for mapping
-################################################################################
-
-saveRDS(community_districts, 
-        file.path("data", "output", "community_district_data.RDS"))
 
 saveRDS(council_districts, 
         file.path("data", "output", "council_district_data.RDS"))
