@@ -27,7 +27,7 @@ current_snap_population = current_snap_population %>%
          bc_snap_households = as.numeric(bc_snap_households)) 
 
 pre_snap_population = fromJSON('https://data.cityofnewyork.us/resource/5awp-wfkt.json?$limit=150000') %>%
-  filter(month == '2023-03-01T00:00:00.000')
+  filter(month == '2019-03-01T00:00:00.000')
 
 # recode and fix datatypes as numeric
 pre_snap_population = pre_snap_population %>%

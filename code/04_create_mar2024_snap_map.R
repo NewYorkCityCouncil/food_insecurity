@@ -35,11 +35,14 @@ labels = community_districts %>%
   group_by(borough.x) %>% 
   summarise(bc_snap_recipients.x = sum(bc_snap_recipients.x, na.rm = T)) %>%
   mutate(cur_recipients_label = paste0(borough.x, ": ", format(bc_snap_recipients.x, big.mark=",")), 
-         cur_recipients_label = ifelse(is.na(bc_snap_recipients.x), NA, cur_recipients_label)) %>%
-  drop_na() 
+         cur_recipients_label = ifelse(is.na(bc_snap_recipients.x), NA, cur_recipients_label), 
+         borough.x = ifelse(borough.x == "Staten_Island", "Staten Island", borough.x)) %>%
+  drop_na() %>%
+  as.data.frame()
 
 labels = boro_label_locations %>%
-  merge(labels, by.x = "boro", by.y = "boro.x", all = T)
+  base::merge(labels, by.x = "boro", by.y = "borough.x", all = T)
+  
 
 
 ################################################################################
@@ -59,7 +62,7 @@ map = leaflet() %>%
   addLegend_decreasing(position = "topleft", pal = pal, 
                        values = d,
                        title = paste0("% SNAP recipients in <br>", 
-                                      "Community District"), 
+                                      "Community District, Mar 24"), 
                        labFormat = labelFormat(suffix = "%", 
                                                transform = function(x){x*100}),
                        opacity = 1, decreasing = T)
@@ -86,15 +89,16 @@ community_districts = community_districts %>%
                         "<strong>Number of SNAP recipients (Dec 2021):</strong> ", 
                             format(bc_snap_recipients.x, big.mark = ","), "<br>",
                         "<strong>% of Population receiving SNAP (Mar 24):</strong> ", round(perc_snap_cur*100, 0), "%<br>",
-                        "<strong>% point growth in recipients since 2023:</strong> ", 
+                        "<strong>% point change in recipients since Mar 2019:</strong> ", 
                         perc_point_change_snap, "%")) 
 
 d = c(min(community_districts$perc_point_change_snap, na.rm=T), 
       max(community_districts$perc_point_change_snap, na.rm=T))
+quantile(community_districts$perc_point_change_snap, c(0, .2, .4, .6, .8, 1))
 
 pal2 = colorBin(
   palette = rev(pal_nycc("diverging")),
-  bins = c(-2, -0.7, -.1, .1, 0.7, 2),
+  bins = c(-5, -3, -2, -0.2, 0.2, 2, 3, 5),
   domain = d,
   na.color = "transparent"
 )
@@ -102,7 +106,7 @@ pal2 = colorBin(
 map = leaflet() %>% 
   addPolygons(data = community_districts, weight = 0, color = ~pal2(perc_point_change_snap), 
               fillOpacity = 1, smoothFactor = 0, popup = ~label, 
-              group = "% point change in SNAP recipients") %>% 
+              group = "% point change in SNAP recipients since Mar 2019") %>% 
   addPolygons(data = community_districts, weight = 0, color = ~pal(perc_snap_cur), 
               fillOpacity = 1, smoothFactor = 0, popup = ~label, 
               group = "% SNAP Mar 2024")  %>% 
@@ -118,7 +122,7 @@ map = leaflet() %>%
   addLegend_decreasing(position = "topleft", pal = pal2, 
                      values = community_districts$perc_point_change_snap,
                      title = paste0("% point change in SNAP recipients <br>", 
-                                    "from Mar 2023 to Mar 2024"), 
+                                    "from Mar 2019 to Mar 2024"), 
                      labFormat = labelFormat(suffix = "%"),
                      opacity = 1, decreasing = T, 
                      group = "% point change in SNAP recipients") %>%
