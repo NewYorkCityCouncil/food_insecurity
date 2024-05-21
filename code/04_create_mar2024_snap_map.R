@@ -98,7 +98,7 @@ quantile(community_districts$perc_point_change_snap, c(0, .2, .4, .6, .8, 1))
 
 pal2 = colorBin(
   palette = rev(pal_nycc("diverging")),
-  bins = c(-5, -3, -2, -0.2, 0.2, 2, 3, 5),
+  bins = c(-5, -3, -2, -1, 1, 2, 3, 5),
   domain = d,
   na.color = "transparent"
 )
