@@ -30,7 +30,7 @@ new_food_security_data = read_csv(file.path("data", "input", "Neighborhood Prior
 
 
 ################################################################################
-# calculate change over different NTA shapes
+# calculate change for different NTA shapes
 ################################################################################
 
 nta_2010_pop = fromJSON("https://data.cityofnewyork.us/resource/rnsn-acs2.json") %>% 
@@ -84,7 +84,7 @@ d = c(min(nta_2020$food_insecurity_2023, na.rm=T),
 
 quantile(nta_2020$food_insecurity_2023, c(0, .2, .4, .6, .8, 1), na.rm=T)*100
 pal = colorBin(
-  palette = pal_nycc("cool"),
+  palette = pal_nycc("warm"),
   bins = c(.05, .09, .14, .18, .35),
   domain = d,
   na.color = "grey"
@@ -117,7 +117,7 @@ map = leaflet() %>%
               group = "% food insecure 2023") %>% 
   addCouncilStyle(add_dists = F) %>%
   addLegend_decreasing(position = "topleft", pal = pal, 
-                       values = community_districts$perc_snap_cur,
+                       values = nta_2020$food_insecurity_2023,
                        title = paste0("% food insecure by <br>", 
                                       "Neighborhood Tabulation Area"), 
                        labFormat = labelFormat(suffix = "%", 
@@ -125,7 +125,7 @@ map = leaflet() %>%
                        opacity = 1, decreasing = T, 
                        group = "% food insecure 2023") %>%
   addLegend_decreasing(position = "topleft", pal = pal2, 
-                       values = community_districts$perc_point_change_snap,
+                       values = nta_2020$perc_point_change_food_insecurity,
                        title = paste0("% point change in food insecurity <br>", 
                                       "from 2018 to 2023"), 
                        labFormat = labelFormat(suffix = "%"),
