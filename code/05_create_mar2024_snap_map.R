@@ -149,7 +149,7 @@ map = leaflet() %>%
                        group = "% point change in SNAP recipients")
 
 mapview::mapshot(map, 
-                 file = file.path("visuals", "percent_individuals_SNAP_benefits.pdf"),
+                 file = file.path("visuals", "percent_change_SNAP_benefits.pdf"),
                  remove_controls = c("homeButton", "layersControl", "zoomControl"), 
                  vwidth = 1000, vheight = 850)
 

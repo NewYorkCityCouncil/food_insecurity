@@ -81,6 +81,30 @@ map = leaflet() %>%
 saveWidget(map, file=file.path('visuals', 
                                "percent_individuals_food_insecure.html"))
 
+
+################################################################################
+# static map perc individuals
+################################################################################
+
+map = leaflet() %>% 
+  addPolygons(data = nta_2020, weight = 0, color = ~pal2(perc_point_change_food_insecurity*100), 
+              fillOpacity = 1, smoothFactor = 0, popup = ~label, 
+              group = "% point change in food insecurity since 2018") %>% 
+  addCouncilStyle(add_dists = T) %>%
+  addLegend_decreasing(position = "topleft", pal = pal2, 
+                       values = nta_2020$perc_point_change_food_insecurity,
+                       title = paste0("% point change in food insecurity <br>", 
+                                      "from 2018 to 2023"), 
+                       labFormat = labelFormat(suffix = "%"),
+                       opacity = 1, decreasing = T, 
+                       group = "% point change in food insecurity since 2018")
+
+mapview::mapshot(map, 
+                 file = file.path("visuals", "percent_change_food_insecure.pdf"),
+                 remove_controls = c("homeButton", "layersControl", "zoomControl"), 
+                 vwidth = 1000, vheight = 850)
+
+
 ################################################################################
 # static map perc individuals
 ################################################################################
