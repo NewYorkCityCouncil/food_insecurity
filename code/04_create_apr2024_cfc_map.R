@@ -138,14 +138,11 @@ mapview::mapshot(map,
 ################################################################################
 
 # prep for plotting
-d = c(min(council_districts$cfc_count, na.rm=T), 
-      max(council_districts$cfc_count, na.rm=T))
-
 pal = councildown::colorBin(
   palette = "cool",
-  bins = c(0, 5, 10, 20, 30),
-  domain = d,
-  na.color = "transparent"
+  bins = c(0.00001, 1, 2, 4, 6, 15),
+  domain = ntas$cfc_count,
+  na.color = "lightgrey"
 )
 
 
@@ -155,15 +152,14 @@ pal = councildown::colorBin(
 
 # plot
 map = leaflet() %>% 
-  addPolygons(data = council_districts, weight = 0, color = ~pal(cfc_count), 
+  addPolygons(data = ntas, weight = 0, color = ~pal(cfc_count), 
               fillOpacity = 1, smoothFactor = 0) %>% 
   addCouncilStyle(add_dists = T, 
-                  highlight_dists = council_districts$CounDist[council_districts$cfc_count >= 10]) %>%
+                  highlight_dists = c(7, 9, 27, 28, 36, 40, 41, 42, 45)) %>%
   addSourceText("Source: NYC Open Data, NYC Human Resources Administration") %>%
-  addLegend_decreasing(position = "topleft", pal = pal, 
-                       values = d,
-                       title = paste0("# of CFC locations in <br>", 
-                                      "Council District"), 
+  addLegend_decreasing(position = "topleft", pal = pal, values = c(ntas$cfc_count, NA),
+                       na.label = "no CFC locations",
+                       title = "# of CFC locations by NTA", 
                        opacity = 1, decreasing = T) 
 
 mapview::mapshot(map, 
@@ -216,3 +212,48 @@ mapview::mapshot(map,
                  file = file.path("visuals", "CFC_locations_support.pdf"),
                  remove_controls = c("homeButton", "layersControl", "zoomControl"), 
                  vwidth = 1000, vheight = 850)
+
+
+################################################################################
+# plot static map - NTAs w high FI pop + low CFC locations - SIMPLE
+################################################################################
+
+summary(ntas$ins_pop)
+summary(ntas$cfc_per10k_fi[ntas$ins_pop > 6223], na.rm=T)
+
+ntas = ntas %>% 
+  mutate(ins_pop = round(population*food_insecurity_2023, 0), 
+         category = case_when(ins_pop > 6223 & cfc_per10k_fi <= 3.936 ~ "above average # of food insecure people, below average # of cfc locations",
+                              ins_pop > 6223 & cfc_per10k_fi > 3.936 ~ "above average # of food insecure people, above average  # of cfc locations",
+                              T ~ "below average # of food insecure people"), 
+         category = factor(category, levels = c("above average # of food insecure people, below average # of cfc locations", 
+                                                "above average # of food insecure people, above average  # of cfc locations", 
+                                                "below average # of food insecure people"))) 
+
+pal = colorFactor(
+  palette = c("#A1CBF1", "#1f3a70", "lightgrey"), 
+  domain = levels(ntas$category),
+  na.color = "grey"
+)
+
+# plot
+map = leaflet() %>% 
+  addPolygons(data = ntas, weight = 0, color = ~pal(category), 
+              fillOpacity = 1, smoothFactor = 0)  %>% 
+  addPolygons(data = parks, color = "grey", fillColor = "grey", weight = 0, 
+              fillOpacity = 1, smoothFactor = 0) %>% 
+  addCouncilStyle(add_dists = T, 
+                  highlight_dists = c(43, 15, 18, 8, 10, 14, 25, 34, 48, 38, 40, 20)) %>%
+  addSourceText("Source: NYC Open Data") %>%
+  addLegend_decreasing(position = "topleft", pal = pal, 
+                       values = unique(ntas$category),
+                       title = paste0("Areas with high food insecurity in need of additional support"), 
+                       opacity = 1, decreasing = T)
+
+mapview::mapshot(map, 
+                 file = file.path("visuals", "CFC_locations_support.pdf"),
+                 remove_controls = c("homeButton", "layersControl", "zoomControl"), 
+                 vwidth = 1000, vheight = 850)
+
+
+
