@@ -13,8 +13,10 @@ library(councilverse)
 # read in current & pre-pandemic SNAP data
 ################################################################################
 
-current_snap_population = fromJSON('https://data.cityofnewyork.us/resource/5awp-wfkt.json?$limit=150000') %>%
-  filter(month == '2024-03-01T00:00:00.000')
+snap = fromJSON('https://data.cityofnewyork.us/resource/5awp-wfkt.json?$limit=1500000')
+
+current_snap_population = snap %>%
+  filter(month == '2024-09-01T00:00:00.000')
 
 # recode and fix datatypes as numeric
 current_snap_population = current_snap_population %>%
@@ -26,8 +28,8 @@ current_snap_population = current_snap_population %>%
          bc_snap_recipients = as.numeric(bc_snap_recipients), 
          bc_snap_households = as.numeric(bc_snap_households)) 
 
-pre_snap_population = fromJSON('https://data.cityofnewyork.us/resource/5awp-wfkt.json?$limit=150000') %>%
-  filter(month == '2019-03-01T00:00:00.000')
+pre_snap_population = snap %>%
+  filter(month == '2019-09-01T00:00:00.000')
 
 # recode and fix datatypes as numeric
 pre_snap_population = pre_snap_population %>%
@@ -79,7 +81,6 @@ saveRDS(community_districts,
 
 council_districts = unzip_sf("https://www.nyc.gov/assets/planning/download/zip/data-maps/open-data/nycc_21d.zip") %>%
   st_read() %>%
-  
   st_transform(st_crs(4326))
 
 cfc_locations = readRDS(file.path("data", "output", "cfc_geocoded.RDS")) %>%

@@ -21,7 +21,7 @@ council_districts = "https://www.nyc.gov/assets/planning/download/zip/data-maps/
 
 
 # color the final dots by type and combine multiples 
-cfc_locations = read_csv(file.path("data", "input", "EFAP_pdf_3_24_24.csv")) %>%
+cfc_locations = read_csv(file.path("data", "input", "EFAP_pdf_11_4_24.csv")) %>%
   group_by(PROGRAM) %>% # unique locations (combine multiples)
   mutate(n = n()) %>% #count how many programs there are per location
   filter(row_number()==1) %>% # just keep one instance
