@@ -3,7 +3,7 @@ remotes::install_github("walkerke/tidycensus")
 
 ################################################################################
 # Created by: Anne Driscoll
-# Last edited on: 5/21/2024
+# Last edited on: 3/11/2026
 #
 # This file creates NTA level data on food insecurity across the city based 
 # on the Mayor's Office of Food Policy data
@@ -11,27 +11,33 @@ remotes::install_github("walkerke/tidycensus")
 ################################################################################
 
 ################################################################################
-# read in data 
+# read in food security data 
 ################################################################################
 
-oldest_food_security_data = read_csv(file.path("data", "input", "Neighborhood Prioritization Map 2018.csv")) %>%
+food_security_data_2018 = read_csv(file.path("data", "input", "Neighborhood Prioritization Map 2018.csv")) %>%
   select(Ntacode,  `Food Insecurity Rate_2018`) %>%
   rename(food_insecurity_2018 = `Food Insecurity Rate_2018`, 
          NTA = Ntacode) %>%
   mutate(food_insecurity_2018 = gsub("%", "", food_insecurity_2018), 
          food_insecurity_2018 = as.numeric(food_insecurity_2018)/100)
 
-old_food_security_data = read_csv(file.path("data", "input", "Neighborhood Prioritization Map 2023.csv")) %>%
+food_security_data_2023 = read_csv(file.path("data", "input", "Neighborhood Prioritization Map 2023.csv")) %>%
   select(NTA, `Food Insecure Perc`) %>%
   rename(food_insecurity_2023 = `Food Insecure Perc`) %>%
   mutate(food_insecurity_2023 = gsub("%", "", food_insecurity_2023), 
          food_insecurity_2023 = as.numeric(food_insecurity_2023)/100)
 
-new_food_security_data = read_csv(file.path("data", "input", "Neighborhood Prioritization Map 2024.csv")) %>%
+food_security_data_2024 = read_csv(file.path("data", "input", "Neighborhood Prioritization Map 2024.csv")) %>%
   select(NTA, Food.Insecure.Percentage) %>%
   rename(food_insecurity_2024 = Food.Insecure.Percentage) %>%
   mutate(food_insecurity_2024 = gsub("%", "", food_insecurity_2024), 
          food_insecurity_2024 = as.numeric(food_insecurity_2024)/100)
+
+food_security_data = read_csv(file.path("data", "input", "Neighborhood Prioritization Map 2025.csv")) %>%
+  select(NTA, Food.Insecure.Percentage) %>%
+  rename(food_insecurity_2025 = Food.Insecure.Percentage) %>%
+  mutate(food_insecurity_2025 = gsub("%", "", food_insecurity_2025), 
+         food_insecurity_2025 = as.numeric(food_insecurity_2025)/100)
 
 
 ################################################################################
@@ -54,7 +60,7 @@ new_food_security_data = read_csv(file.path("data", "input", "Neighborhood Prior
  
  nta_2020 = st_read("https://data.cityofnewyork.us/resource/9nt8-h7nd.geojson") %>%
    st_transform(st_crs(4326)) %>% 
-   merge(new_food_security_data, by.x = "nta2020", by.y = "NTA", all.x = T) %>%
+   merge(food_security_data, by.x = "nta2020", by.y = "NTA", all.x = T) %>%
    st_make_valid()
  
 # # get 2010 NTA food insecure in 2020 geo ---------------------------------------
@@ -79,9 +85,9 @@ new_food_security_data = read_csv(file.path("data", "input", "Neighborhood Prior
 #   summarise(food_insecurity_2018 = weighted.mean(food_insecurity_2018, intersection_area))
  
 nta_2020 = nta_2020 %>% 
-   select(nta2020, ntaname, food_insecurity_2024) %>% 
-   merge(old_food_security_data, by.x = "nta2020", by.y = "NTA", all.x = T) %>% 
-   mutate(perc_point_change_food_insecurity = food_insecurity_2024 - food_insecurity_2023)
+   select(nta2020, ntaname, food_insecurity_2025) %>% 
+   merge(food_security_data_2023, by.x = "nta2020", by.y = "NTA", all.x = T) %>% 
+   mutate(perc_point_change_food_insecurity = food_insecurity_2025 - food_insecurity_2023)
 
 
 ################################################################################
@@ -130,7 +136,7 @@ cfc_locations = readRDS(file.path("data", "output", "cfc_geocoded.RDS")) %>%
 nta_2020$cfc_count = lengths(st_intersects(nta_2020, cfc_locations))
 nta_2020 = nta_2020 %>%
   mutate(cfc_per100k = cfc_count/population*100000, 
-         cfc_per10k_fi = cfc_count/(population*food_insecurity_2023)*10000)
+         cfc_per10k_fi = cfc_count/(population*food_insecurity_2025)*10000)
 
 
 

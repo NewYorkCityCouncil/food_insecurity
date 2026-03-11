@@ -13,10 +13,10 @@ library(councilverse)
 # read in current & pre-pandemic SNAP data
 ################################################################################
 
-snap = fromJSON('https://data.cityofnewyork.us/resource/5awp-wfkt.json?$limit=1500000')
+snap = fromJSON('https://data.cityofnewyork.us/resource/5awp-wfkt.json?$limit=9999999')
 
 current_snap_population = snap %>%
-  filter(month == '2024-09-01T00:00:00.000')
+  filter(month == '2025-09-01T00:00:00.000')
 
 # recode and fix datatypes as numeric
 current_snap_population = current_snap_population %>%
@@ -29,7 +29,7 @@ current_snap_population = current_snap_population %>%
          bc_snap_households = as.numeric(bc_snap_households)) 
 
 pre_snap_population = snap %>%
-  filter(month == '2019-09-01T00:00:00.000')
+  filter(month == '2023-09-01T00:00:00.000')
 
 # recode and fix datatypes as numeric
 pre_snap_population = pre_snap_population %>%
